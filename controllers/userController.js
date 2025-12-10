@@ -43,3 +43,52 @@ exports.createStudent = async (req, res) => {
         res.status(500).json({ msg: 'Error al crear alumno' });
     }
 };
+
+// ... imports
+
+// Listar PROFESORES del mismo centro (Solo para Admin)
+exports.getTeachersByCenter = async (req, res) => {
+    const centerId = req.user.id_centro;
+    
+    // Verificación de seguridad básica
+    if (req.user.tipo_usuario !== 'Admin') {
+        return res.status(403).json({ msg: 'Acceso denegado' });
+    }
+
+    const query = 'SELECT id_usuario, nombre, email FROM Usuarios WHERE id_centro = ? AND tipo_usuario = "profesor"';
+    
+    try {
+        const [users] = await db.query(query, [centerId]);
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al obtener profesores' });
+    }
+};
+
+// Crear PROFESOR (Solo para Admin)
+exports.createTeacher = async (req, res) => {
+    // 1. Verificar que quien crea sea Admin
+    console.log (req.user);
+    if (req.user.tipo_usuario !== 'Admin') {
+        return res.status(403).json({ msg: 'Solo el administrador puede registrar profesores.' });
+    }
+
+    const { nombre, email, password } = req.body;
+    const centerId = req.user.id_centro;
+
+    if (!nombre || !email || !password) return res.status(400).json({ msg: 'Faltan datos' });
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(password, salt);
+
+        // Insertamos con rol 'profesor'
+        const query = 'INSERT INTO Usuarios (nombre, email, password_hash, tipo_usuario, id_centro) VALUES (?, ?, ?, "profesor", ?)';
+        await db.query(query, [nombre, email, password_hash, centerId]);
+
+        res.status(201).json({ msg: 'Profesor creado exitosamente' });
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ msg: 'Email duplicado' });
+        res.status(500).json({ msg: 'Error al crear profesor' });
+    }
+};
