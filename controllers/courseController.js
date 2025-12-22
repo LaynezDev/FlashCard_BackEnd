@@ -2,36 +2,44 @@ const db = require('../config/db');
 
 // Obtener Cursos del Usuario
 exports.getMyCourses = async (req, res) => {
-    // 1. Imprime esto para depurar en la consola de VS Code
-    console.log("Usuario solicitando cursos:", req.user); 
-
     const { id_usuario, tipo_usuario, id_centro } = req.user;
 
     let query = '';
     let params = [];
 
-    // Si es profesor o admin, ve TODO lo del centro
-    if (tipo_usuario === 'Admin' || tipo_usuario === 'Profesor') {
-        
-        // VALIDACIÓN DE SEGURIDAD
-        if (!id_centro) {
-            return res.status(400).json({ msg: "Usuario sin centro asignado. Contacte soporte." });
-        }
-
-        query = 'SELECT * FROM Cursos WHERE id_centro = ?';
-        params = [id_centro];
-    } else {
-        // Alumnos...
+    // CASO 1: ADMINISTRADOR (Ve todo lo del centro)
+    if (tipo_usuario === 'Admin') {
+        // Opcional: Hacemos JOIN para traer el nombre del profesor asignado también
         query = `
-            SELECT C.* FROM Cursos C
+            SELECT C.*, U.nombre as nombre_profesor 
+            FROM Cursos C
+            LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario
+            WHERE C.id_centro = ?
+        `;
+        params = [id_centro];
+    } 
+    // CASO 2: PROFESOR (Ve solo LO SUYO) <-- AQUÍ ESTABA EL ERROR
+    else if (tipo_usuario === 'Profesor') {
+        query = `
+            SELECT * FROM Cursos 
+            WHERE id_profesor = ?
+        `;
+        params = [id_usuario];
+    } 
+    // CASO 3: ALUMNO (Ve solo donde está INSCRITO)
+    else {
+        query = `
+            SELECT C.*, U.nombre as nombre_profesor 
+            FROM Cursos C
             INNER JOIN Inscripciones I ON C.id_curso = I.id_curso
+            LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario
             WHERE I.id_usuario = ?
         `;
         params = [id_usuario];
     }
+
     try {
         const [rows] = await db.query(query, params);
-        console.log("Cursos encontrados:", rows.length); // Ver en consola
         res.json(rows);
     } catch (error) {
         console.error(error);
@@ -126,5 +134,31 @@ exports.enrollStudent = async (req, res) => {
             return res.status(400).json({ msg: 'El alumno ya está inscrito en este curso.' });
         }
         res.status(500).json({ msg: 'Error al inscribir alumno' });
+    }
+};
+
+exports.createCourse = async (req, res) => {
+    // Recibimos id_profesor (opcional, si quien crea es el mismo profe se puede auto-asignar)
+    const { nombre_curso, descripcion, id_profesor } = req.body;
+    const { id_centro, tipo_usuario, id_usuario } = req.user;
+
+    // Lógica:
+    // - Si soy Admin, debo enviar 'id_profesor'.
+    // - Si soy Profesor y el sistema permite que yo cree cursos, me asigno a mí mismo.
+    
+    let profesorAsignado = id_profesor;
+
+    if (tipo_usuario === 'Profesor') {
+        profesorAsignado = id_usuario;
+    }
+
+    const query = 'INSERT INTO Cursos (nombre_curso, descripcion, id_centro, id_profesor) VALUES (?, ?, ?, ?)';
+    
+    try {
+        await db.query(query, [nombre_curso, descripcion, id_centro, profesorAsignado]);
+        res.status(201).json({ msg: 'Curso creado y asignado exitosamente' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Error al crear curso' });
     }
 };
