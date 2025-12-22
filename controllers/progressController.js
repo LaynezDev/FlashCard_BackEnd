@@ -132,3 +132,65 @@ exports.getDeckStats = async (req, res) => {
         res.status(500).json({ msg: 'Error al calcular estadísticas' });
     }
 };
+
+// ... imports
+
+// Obtener progreso de TODOS los alumnos de un curso para un deck específico
+exports.getTeacherReport = async (req, res) => {
+    const { courseId, deckId } = req.params;
+
+    // 1. Primero averiguamos cuántas cartas tiene el deck para calcular el 100%
+    // El puntaje máximo posible es: (Total Cartas * 5 puntos de confianza máxima)
+    const deckQuery = 'SELECT COUNT(*) as total_cards FROM Flashcards WHERE id_deck = ?';
+    
+    // 2. Query Principal: Traer alumnos y sus puntos sumados
+    // Usamos COALESCE para que si no han estudiado, devuelva 0 en lugar de NULL
+    const reportQuery = `
+        SELECT 
+            U.id_usuario,
+            U.nombre,
+            U.email,
+            SUM(COALESCE(P.nivel_dominio, 0)) as total_points_user
+        FROM Inscripciones I
+        JOIN Usuarios U ON I.id_usuario = U.id_usuario
+        LEFT JOIN Flashcards F ON F.id_deck = ? 
+        LEFT JOIN ProgresoUsuario P ON P.id_flashcard = F.id_flashcard AND P.id_usuario = U.id_usuario
+        WHERE I.id_curso = ? AND U.tipo_usuario = 'Alumno'
+        GROUP BY U.id_usuario, U.nombre, U.email
+        ORDER BY total_points_user DESC
+    `;
+
+    try {
+        // Ejecutar query 1 (Info del Deck)
+        const [deckRows] = await db.query(deckQuery, [deckId]);
+        const totalCards = deckRows[0].total_cards;
+        const maxPossiblePoints = totalCards * 5;
+
+        // Ejecutar query 2 (Alumnos)
+        const [studentsRows] = await db.query(reportQuery, [deckId, courseId]);
+
+        // Procesar datos para devolver porcentaje limpio
+        const report = studentsRows.map(student => {
+            let percentage = 0;
+            if (maxPossiblePoints > 0) {
+                percentage = Math.round((student.total_points_user / maxPossiblePoints) * 100);
+            }
+            return {
+                id: student.id_usuario,
+                name: student.nombre,
+                email: student.email,
+                percentage: percentage > 100 ? 100 : percentage, // Cap a 100% por seguridad
+                raw_score: student.total_points_user
+            };
+        });
+
+        res.json({
+            deck_info: { total_cards: totalCards },
+            students: report
+        });
+
+    } catch (error) {
+        console.error("Error en reporte:", error);
+        res.status(500).json({ msg: 'Error generando reporte' });
+    }
+};
