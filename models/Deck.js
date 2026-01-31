@@ -18,7 +18,7 @@ exports.createDeck = async (deckData) => {
     console.log("Vinculando deck al curso ID:", id_curso);
     console.log("Vinculando deck al id_deck:", id_deck);
     if (id_curso) {
-        const courseQuery = 'INSERT INTO deckCursos (id_deck, id_curso) VALUES (?, ?)';
+        const courseQuery = 'INSERT INTO DeckCursos (id_deck, id_curso) VALUES (?, ?)';
         await db.query(courseQuery, [id_deck, id_curso]);
     }
 
