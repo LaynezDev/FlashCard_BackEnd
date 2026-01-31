@@ -66,31 +66,31 @@ exports.getDecksByCourse = async (req, res) => {
     }
 };
 
-// Crear un nuevo curso
-exports.createCourse = async (req, res) => {
-   // 1. VERIFICACIÓN DE ROL
-    // Si no es admin ni profesor, rechazamos la petición
-    if (req.user.tipo_usuario !== 'admin' && req.user.tipo_usuario !== 'Profesor') {
-        return res.status(403).json({ msg: 'Acceso denegado. Solo profesores pueden crear cursos.' });
-    }
-    const { nombre_curso, descripcion } = req.body;
-    const { id_centro } = req.user; // Obtenido del token
+// // Crear un nuevo curso
+// exports.createCourse = async (req, res) => {
+//    // 1. VERIFICACIÓN DE ROL
+//     // Si no es admin ni profesor, rechazamos la petición
+//     if (req.user.tipo_usuario !== 'admin' && req.user.tipo_usuario !== 'Profesor') {
+//         return res.status(403).json({ msg: 'Acceso denegado. Solo profesores pueden crear cursos.' });
+//     }
+//     const { nombre_curso, descripcion } = req.body;
+//     const { id_centro } = req.user; // Obtenido del token
 
     
-    if (!nombre_curso) {
-        return res.status(400).json({ msg: 'El nombre del curso es obligatorio' });
-    }
+//     if (!nombre_curso) {
+//         return res.status(400).json({ msg: 'El nombre del curso es obligatorio' });
+//     }
 
-    const query = 'INSERT INTO Cursos (nombre_curso, descripcion, id_centro) VALUES (?, ?, ?)';
+//     const query = 'INSERT INTO Cursos (nombre_curso, descripcion, id_centro) VALUES (?, ?, ?)';
     
-    try {
-        await db.query(query, [nombre_curso, descripcion, id_centro]);
-        res.status(201).json({ msg: 'Curso creado exitosamente' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: 'Error al crear curso' });
-    }
-};
+//     try {
+//         await db.query(query, [nombre_curso, descripcion, id_centro]);
+//         res.status(201).json({ msg: 'Curso creado exitosamente' });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ msg: 'Error al crear curso' });
+//     }
+// };
 
 // Eliminar un curso (y sus decks/tarjetas en cascada idealmente)
 exports.deleteCourse = async (req, res) => {
