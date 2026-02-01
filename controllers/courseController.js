@@ -95,7 +95,7 @@ exports.getDecksByCourse = async (req, res) => {
 // Eliminar un curso (y sus decks/tarjetas en cascada idealmente)
 exports.deleteCourse = async (req, res) => {
    // 1. VERIFICACIÓN DE ROL
-    if (req.user.tipo_usuario !== 'admin' && req.user.tipo_usuario !== 'Profesor') {
+    if (req.user.tipo_usuario !== 'Admin' && req.user.tipo_usuario !== 'Profesor') {
         return res.status(403).json({ msg: 'Acceso denegado.' });
     }
     const { courseId } = req.params;
@@ -112,7 +112,7 @@ exports.deleteCourse = async (req, res) => {
 // Inscribir un alumno a un curso
 exports.enrollStudent = async (req, res) => {
     // Solo profesores/admin pueden inscribir
-    if (req.user.tipo_usuario !== 'admin' && req.user.tipo_usuario !== 'Profesor') {
+    if (req.user.tipo_usuario !== 'Admin' && req.user.tipo_usuario !== 'Profesor') {
         return res.status(403).json({ msg: 'No tienes permiso para inscribir alumnos.' });
     }
 
