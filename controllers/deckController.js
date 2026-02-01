@@ -4,50 +4,51 @@ const Deck = require('../models/Deck');
 
 // --- Lógica de Decks ---
 
-// exports.createDeck = async (req, res) => {
-//     const id_creador = req.user.id_usuario; // Obtenido del JWT
-//     const { nombre_deck, descripcion, id_curso, publico } = req.body;
+exports.createDeck = async (req, res) => {
+    const id_creador = req.user.id_usuario; // Obtenido del JWT
+    const { nombre_deck, descripcion, id_curso, publico } = req.body;
 
-//     if (!nombre_deck) {
-//         return res.status(400).json({ msg: 'El nombre del Deck es obligatorio.' });
-//     }
+    if (!nombre_deck) {
+        return res.status(400).json({ msg: 'El nombre del Deck es obligatorio.' });
+    }
+
+    try {
+        const newDeck = await Deck.createDeck({ 
+            nombre_deck, 
+            descripcion, 
+            id_creador, 
+            id_curso,
+            publico 
+        });
+        res.status(201).json(newDeck);
+    } catch (error) {
+        console.error('Error al crear el deck:', error);
+        res.status(500).json({ msg: 'Error interno del servidor al crear el deck.' });
+    }
+};
+// exports.createDeck = async (req, res) => {
+//     console.log("Request body para crear deck:", req.body);
+//     const id_creador = req.user.id_usuario;
+//     // Ahora recibimos id_curso del body
+//     const { nombre_deck, descripcion, publico, id_curso } = req.body; 
 
 //     try {
-//         const newDeck = await Deck.createDeck({ 
-//             nombre_deck, 
-//             descripcion, 
-//             id_creador, 
-//             id_curso,
-//             publico 
+//         // 1. Crear el Deck
+//         const deckResult = await Deck.createDeck({ 
+//             nombre_deck, descripcion, id_creador, id_curso, publico 
 //         });
-//         res.status(201).json(newDeck);
+
+//         // 2. Vincularlo al Curso en la tabla intermedia (DeckCursos)
+//         if (id_curso) {
+//             await db.query('INSERT INTO DeckCursos (id_deck, id_curso) VALUES (?, ?)', [deckResult.id_deck, id_curso]);
+//         }
+
+//         res.status(201).json(deckResult);
 //     } catch (error) {
-//         console.error('Error al crear el deck:', error);
+//         console.log("Error al crear el deck:", error);
 //         res.status(500).json({ msg: 'Error interno del servidor al crear el deck.' });
 //     }
 // };
-exports.createDeck = async (req, res) => {
-    console.log("Request body para crear deck:", req.body);
-    const id_creador = req.user.id_usuario;
-    // Ahora recibimos id_curso del body
-    const { nombre_deck, descripcion, publico, id_curso } = req.body; 
-
-    try {
-        // 1. Crear el Deck
-        const deckResult = await Deck.createDeck({ 
-            nombre_deck, descripcion, id_creador, id_curso, publico 
-        });
-
-        // 2. Vincularlo al Curso en la tabla intermedia (DeckCursos)
-        if (id_curso) {
-            await db.query('INSERT INTO DeckCursos (id_deck, id_curso) VALUES (?, ?)', [deckResult.id_deck, id_curso]);
-        }
-
-        res.status(201).json(deckResult);
-    } catch (error) {
-        // ... error handler
-    }
-};
 
 exports.getDecks = async (req, res) => {
     // Supongamos que el ID del curso del usuario está en el token o lo buscamos
