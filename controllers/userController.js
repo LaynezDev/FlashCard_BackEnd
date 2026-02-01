@@ -92,24 +92,24 @@ exports.createTeacher = async (req, res) => {
         res.status(500).json({ msg: "Error al crear profesor" });
     }
 };
-exports.createStudent = async (req, res) => {
-    // Recibimos id_seccion del frontend
-    const { nombre, email, password, id_seccion } = req.body;
-    const centerId = req.user.id_centro;
+// exports.createStudent = async (req, res) => {
+//     // Recibimos id_seccion del frontend
+//     const { nombre, email, password, id_seccion } = req.body;
+//     const centerId = req.user.id_centro;
 
-    // ... validaciones ...
+//     // ... validaciones ...
 
-    try {
-        const salt = await bcrypt.genSalt(10);
-        const password_hash = await bcrypt.hash(password, salt);
+//     try {
+//         const salt = await bcrypt.genSalt(10);
+//         const password_hash = await bcrypt.hash(password, salt);
 
-        // INSERT actualizado con id_seccion
-        const query = 'INSERT INTO Usuarios (nombre, email, password_hash, tipo_usuario, id_centro, id_seccion) VALUES (?, ?, ?, "student", ?, ?)';
+//         // INSERT actualizado con id_seccion
+//         const query = 'INSERT INTO Usuarios (nombre, email, password_hash, tipo_usuario, id_centro, id_seccion) VALUES (?, ?, ?, "student", ?, ?)';
 
-        await db.query(query, [nombre, email, password_hash, centerId, id_seccion || null]);
+//         await db.query(query, [nombre, email, password_hash, centerId, id_seccion || null]);
 
-        res.status(201).json({ msg: "Alumno creado exitosamente" });
-    } catch (error) {
-        // ... errores ...
-    }
-};
+//         res.status(201).json({ msg: "Alumno creado exitosamente" });
+//     } catch (error) {
+//         // ... errores ...
+//     }
+// };
