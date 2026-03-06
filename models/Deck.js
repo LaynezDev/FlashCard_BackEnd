@@ -50,9 +50,9 @@ exports.getAvailableDecks = async (userId, userCourseId) => {
  * Crea una nueva Flashcard dentro de un Deck.
  */
 exports.createFlashcard = async (cardData) => {
-    const { id_deck, pregunta, respuesta, imagen_url } = cardData;
-    const query = 'INSERT INTO Flashcards (id_deck, pregunta, respuesta, imagen_url) VALUES (?, ?, ?, ?)';
-    const [result] = await db.query(query, [id_deck, pregunta, respuesta, imagen_url || null]);
+    const { id_deck, pregunta, respuesta, imagen_url, tipo } = cardData;
+    const query = 'INSERT INTO Flashcards (id_deck, pregunta, respuesta, imagen_url,tipo) VALUES (?, ?, ?, ?,?)';
+    const [result] = await db.query(query, [id_deck, pregunta, respuesta, imagen_url || null, tipo || 'texto']);
     return { id_flashcard: result.insertId, ...cardData };
 };
 
@@ -60,7 +60,7 @@ exports.createFlashcard = async (cardData) => {
  * Obtiene todas las Flashcards de un Deck (usado para edición o listado).
  */
 exports.getFlashcardsByDeck = async (id_deck) => {
-    const query = 'SELECT id_flashcard, pregunta, respuesta, imagen_url FROM Flashcards WHERE id_deck = ? ORDER BY id_flashcard';
+    const query = 'SELECT id_flashcard, pregunta, respuesta, imagen_url, tipo FROM Flashcards WHERE id_deck = ? ORDER BY id_flashcard';
     const [rows] = await db.query(query, [id_deck]);
     return rows;
 };

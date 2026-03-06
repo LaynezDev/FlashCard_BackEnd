@@ -1,6 +1,7 @@
 // server.js
 require("dotenv").config(); // Cargar variables de entorno
 const express = require("express");
+const path = require('path');
 const cors = require("cors");
 const helmet = require("helmet");
 const app = express();
@@ -16,6 +17,14 @@ const schoolRoutes = require("./routes/schoolRoutes");
 app.use(helmet());
 app.use(cors());
 app.use(express.json()); // Habilitar la lectura de JSON en el body
+
+// Hacer que la carpeta 'uploads' sea accesible vía URL
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const fs = require('fs');
+if (!fs.existsSync('./uploads')){
+    fs.mkdirSync('./uploads');
+}
 
 // Rutas de la API
 app.use("/api/v1/auth", authRoutes);

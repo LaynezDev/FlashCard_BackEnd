@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const deckController = require('../controllers/deckController');
+const upload = require('../middleware/upload'); // Importamos Multer
 const authMiddleware = require('../middleware/auth'); // Middleware de protección JWT
 
 // --- Rutas de Decks (/api/v1/decks) ---
@@ -16,10 +17,13 @@ router.get('/', authMiddleware, deckController.getDecks);
 // --- Rutas de Flashcards (/api/v1/decks/:deckId/cards) ---
 
 // POST /api/v1/decks/:deckId/cards - Crear una nueva tarjeta en un deck
-router.post('/:deckId/cards', authMiddleware, deckController.createFlashcard);
+router.post('/cards', authMiddleware,upload.single('imagen'), deckController.createFlashcard);
+// router.post('/:deckId/cards', authMiddleware,upload.single('imagen'), deckController.createFlashcard);
 
 // GET /api/v1/decks/:deckId/cards - Listar todas las tarjetas de un deck
 router.get('/:deckId/cards', authMiddleware, deckController.getFlashcards);
+// Ejemplo en routes
+router.get('/:deckId/flashcards', authMiddleware, deckController.getCardsByDeck);
 
 // ADMIN: Obtener todas las tarjetas de un deck para editar
 router.get('/:deckId/editor', authMiddleware, deckController.getDeckDetails);

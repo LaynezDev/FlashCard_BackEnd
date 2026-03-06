@@ -62,14 +62,16 @@ function calculateInterval(confianza) {
 exports.registerReview = async (req, res) => {
     const userId = req.user.id_usuario;
     const { cardId } = req.params;
-    const { confianza } = req.body; // Un número del 1 al 5
+    const { id_flashcard,nivel_dominio } = req.body; // Un número del 1 al 5
 
-    if (confianza < 1 || confianza > 5) {
+    console.log(JSON.stringify(req.body));  
+   
+    if (nivel_dominio < 1 || nivel_dominio > 5) {
         return res.status(400).json({ msg: 'La confianza debe ser un valor entre 1 y 5.' });
     }
 
     // 1. Calcular el intervalo de días
-    const intervalDays = calculateInterval(confianza);
+    const intervalDays = calculateInterval(nivel_dominio);
     
     // Usamos la función DATE_ADD de MySQL para la fecha, pero necesitamos el número de días
     const query = `
@@ -82,7 +84,7 @@ exports.registerReview = async (req, res) => {
     `;
 
     try {
-        await db.query(query, [userId, cardId, confianza, intervalDays, intervalDays]);
+        await db.query(query, [userId, id_flashcard, nivel_dominio, intervalDays, intervalDays]);
         res.status(200).json({ msg: 'Progreso actualizado exitosamente.', next_review_in_days: intervalDays });
     } catch (error) {
         console.error('Error al registrar la revisión:', error);

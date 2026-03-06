@@ -68,8 +68,12 @@ exports.getDecks = async (req, res) => {
 // --- Lógica de Flashcards ---
 
 exports.createFlashcard = async (req, res) => {
-    const { deckId } = req.params;
-    const { pregunta, respuesta, imagen_url } = req.body;
+    const { id_deck, pregunta, respuesta, tipo } = req.body;
+    let imagen_url = null;
+    // Si Multer subió un archivo, guardamos la URL relativa
+    if (req.file) {
+        imagen_url = `/uploads/${req.file.filename}`;
+    }
     
     // Validación de permisos: Solo el creador del deck debería poder añadir tarjetas.
     // **NOTA:** Esto requiere una verificación adicional en el modelo o controlador
@@ -78,9 +82,9 @@ exports.createFlashcard = async (req, res) => {
     if (!pregunta || !respuesta) {
         return res.status(400).json({ msg: 'Pregunta y respuesta son obligatorias.' });
     }
-
+    console.log("Datos para crear flashcard:", { id_deck: id_deck, pregunta, respuesta, imagen_url, tipo });
     try {
-        const newCard = await Deck.createFlashcard({ id_deck: deckId, pregunta, respuesta, imagen_url });
+        const newCard = await Deck.createFlashcard({ id_deck: id_deck, pregunta, respuesta, imagen_url, tipo });
         res.status(201).json(newCard);
     } catch (error) {
         console.error('Error al crear la flashcard:', error);
@@ -99,6 +103,19 @@ exports.getFlashcards = async (req, res) => {
     } catch (error) {
         console.error('Error al obtener las flashcards:', error);
         res.status(500).json({ msg: 'Error interno del servidor al listar las tarjetas.' });
+    }
+};
+
+exports.getCardsByDeck = async (req, res) => {
+    const { deckId } = req.params;
+    try {
+        const query = 'SELECT * FROM Flashcards WHERE id_deck = ?';
+        console.log("query para obtener tarjetas por deck:", query, "con deckId:", deckId); 
+        const [rows] = await db.query(query, [deckId]);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error al obtener tarjetas por deck:', error);
+        res.status(500).json({ msg: 'Error al obtener tarjetas' });
     }
 };
 

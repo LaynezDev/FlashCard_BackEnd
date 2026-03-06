@@ -23,4 +23,5 @@ router.get('/:deckId/stats', auth, progressController.getDeckStats);
 // ...
 // GET /api/v1/progress/report/:courseId/:deckId
 router.get('/report/:courseId/:deckId', auth, progressController.getTeacherReport);
+router.post('/review', auth, progressController.registerReview);
 module.exports = router;
