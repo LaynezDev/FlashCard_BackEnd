@@ -8,30 +8,63 @@ const authMiddleware = require('../middleware/auth'); // Middleware de protecci�
 
 // --- Rutas de Decks (/api/v1/decks) ---
 
-// POST /api/v1/decks - Crear un nuevo deck
+/**
+ * @route   POST /api/v1/decks
+ * @desc    Crear un nuevo deck
+ * @access  Privado (Requiere token JWT)
+ */
 router.post('/', authMiddleware, deckController.createDeck);
 
-// GET /api/v1/decks - Obtener todos los decks disponibles para el usuario
+/**
+ * @route   GET /api/v1/decks
+ * @desc    Obtener todos los decks disponibles para el usuario
+ * @access  Privado
+ */
 router.get('/', authMiddleware, deckController.getDecks);
 
 // --- Rutas de Flashcards (/api/v1/decks/:deckId/cards) ---
 
-// POST /api/v1/decks/:deckId/cards - Crear una nueva tarjeta en un deck
+/**
+ * @route   POST /api/v1/decks/cards
+ * @desc    Crear una nueva tarjeta en un deck (soporta subida de una imagen)
+ * @access  Privado
+ */
 router.post('/cards', authMiddleware,upload.single('imagen'), deckController.createFlashcard);
 // router.post('/:deckId/cards', authMiddleware,upload.single('imagen'), deckController.createFlashcard);
 
-// GET /api/v1/decks/:deckId/cards - Listar todas las tarjetas de un deck
+/**
+ * @route   GET /api/v1/decks/:deckId/cards
+ * @desc    Listar todas las tarjetas asociadas a un deck específico
+ * @access  Privado
+ */
 router.get('/:deckId/cards', authMiddleware, deckController.getFlashcards);
-// Ejemplo en routes
+
+/**
+ * @route   GET /api/v1/decks/:deckId/flashcards
+ * @desc    Ruta alternativa para obtener las tarjetas de un deck directamente desde la DB
+ * @access  Privado
+ */
 router.get('/:deckId/flashcards', authMiddleware, deckController.getCardsByDeck);
 
-// ADMIN: Obtener todas las tarjetas de un deck para editar
+/**
+ * @route   GET /api/v1/decks/:deckId/editor
+ * @desc    ADMIN: Obtener los detalles completos y tarjetas de un deck para edición
+ * @access  Privado (Administrador / Creador)
+ */
 router.get('/:deckId/editor', authMiddleware, deckController.getDeckDetails);
 
-// ADMIN: Eliminar un deck
+/**
+ * @route   DELETE /api/v1/decks/:deckId
+ * @desc    ADMIN: Eliminar un deck por su ID
+ * @access  Privado (Administrador / Creador)
+ */
 router.delete('/:deckId', authMiddleware, deckController.deleteDeck);
 
-// ADMIN: Eliminar una tarjeta específica
+/**
+ * @route   DELETE /api/v1/decks/cards/:cardId
+ * @desc    ADMIN: Eliminar una tarjeta específica por su ID
+ * @access  Privado (Administrador / Creador)
+ */
 router.delete('/cards/:cardId', authMiddleware, deckController.deleteCard);
 
 // ADMIN: Crear tarjeta (Ya tenías POST /:deckId/cards, asegúrate que funcione)
