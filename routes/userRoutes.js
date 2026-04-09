@@ -13,4 +13,7 @@ router.get('/teachers', authMiddleware, userController.getTeachersByCenter);
 
 // POST /api/v1/users/teachers
 router.post('/teachers', authMiddleware, userController.createTeacher);
+
+// PUT /api/v1/users/students/:id/password - Actualizar contraseña de un alumno
+router.put('/students/:id/password', authMiddleware, userController.updateStudentPassword);
 module.exports = router;
