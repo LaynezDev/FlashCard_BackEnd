@@ -64,8 +64,6 @@ exports.registerReview = async (req, res) => {
     const { cardId } = req.params;
     const { id_flashcard,nivel_dominio } = req.body; // Un número del 1 al 5
 
-    console.log(JSON.stringify(req.body));  
-   
     if (nivel_dominio < 1 || nivel_dominio > 5) {
         return res.status(400).json({ msg: 'La confianza debe ser un valor entre 1 y 5.' });
     }

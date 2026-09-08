@@ -19,8 +19,6 @@ exports.getStudentsByCenter = async (req, res) => {
 exports.createStudent = async (req, res) => {
     const { nombre, email, password } = req.body;
     const centerId = req.user.id_centro; // Se asigna automáticamente al centro del profesor
-    console.log(req.body);
-    console.log(req.user);
     if (!nombre || !email || !password) {
         return res.status(400).json({ msg: "Faltan datos" });
     }
@@ -68,7 +66,6 @@ exports.getTeachersByCenter = async (req, res) => {
 // Crear PROFESOR (Solo para Admin)
 exports.createTeacher = async (req, res) => {
     // 1. Verificar que quien crea sea Admin
-    console.log(req.user);
     if (req.user.tipo_usuario !== "Admin") {
         return res.status(403).json({ msg: "Solo el administrador puede registrar profesores." });
     }

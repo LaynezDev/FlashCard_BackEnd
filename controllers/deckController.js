@@ -26,29 +26,6 @@ exports.createDeck = async (req, res) => {
         res.status(500).json({ msg: 'Error interno del servidor al crear el deck.' });
     }
 };
-// exports.createDeck = async (req, res) => {
-//     console.log("Request body para crear deck:", req.body);
-//     const id_creador = req.user.id_usuario;
-//     // Ahora recibimos id_curso del body
-//     const { nombre_deck, descripcion, publico, id_curso } = req.body; 
-
-//     try {
-//         // 1. Crear el Deck
-//         const deckResult = await Deck.createDeck({ 
-//             nombre_deck, descripcion, id_creador, id_curso, publico 
-//         });
-
-//         // 2. Vincularlo al Curso en la tabla intermedia (DeckCursos)
-//         if (id_curso) {
-//             await db.query('INSERT INTO DeckCursos (id_deck, id_curso) VALUES (?, ?)', [deckResult.id_deck, id_curso]);
-//         }
-
-//         res.status(201).json(deckResult);
-//     } catch (error) {
-//         console.log("Error al crear el deck:", error);
-//         res.status(500).json({ msg: 'Error interno del servidor al crear el deck.' });
-//     }
-// };
 
 exports.getDecks = async (req, res) => {
     // Supongamos que el ID del curso del usuario está en el token o lo buscamos
@@ -82,7 +59,6 @@ exports.createFlashcard = async (req, res) => {
     if (!pregunta || !respuesta) {
         return res.status(400).json({ msg: 'Pregunta y respuesta son obligatorias.' });
     }
-    console.log("Datos para crear flashcard:", { id_deck: id_deck, pregunta, respuesta, imagen_url, tipo });
     try {
         const newCard = await Deck.createFlashcard({ id_deck: id_deck, pregunta, respuesta, imagen_url, tipo });
         res.status(201).json(newCard);

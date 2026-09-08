@@ -90,7 +90,7 @@ exports.registerUser = async (req, res) => {
             user: {
                 id_usuario: newUser.id_usuario, // Usar el ID devuelto por MySQL
                 tipo_usuario: tipo_usuario,
-                id_centro: user.id_centro // <--- ¡IMPORTANTE!
+                id_centro: newUser.id_centro // <--- ¡IMPORTANTE!
             }
         };
 

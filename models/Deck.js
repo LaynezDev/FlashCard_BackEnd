@@ -11,12 +11,9 @@ exports.createDeck = async (deckData) => {
     // Insertar el Deck
     const deckQuery = 'INSERT INTO Decks (nombre_deck, descripcion, id_creador, publico) VALUES (?, ?, ?, ?)';
     const [deckResult] = await db.query(deckQuery, [nombre_deck, descripcion, id_creador, publico || false]);
-    console.log("Deck creado con ID:", deckResult.insertId);
     const id_deck = deckResult.insertId;
 
     // Asignar el Deck al Curso (si se proporciona)
-    console.log("Vinculando deck al curso ID:", id_curso);
-    console.log("Vinculando deck al id_deck:", id_deck);
     if (id_curso) {
         const courseQuery = 'INSERT INTO DeckCursos (id_deck, id_curso) VALUES (?, ?)';
         await db.query(courseQuery, [id_deck, id_curso]);
