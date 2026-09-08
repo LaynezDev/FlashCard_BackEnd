@@ -42,8 +42,6 @@ exports.createStudent = async (req, res) => {
     }
 };
 
-// ... imports
-
 // Listar PROFESORES del mismo centro (Solo para Admin)
 exports.getTeachersByCenter = async (req, res) => {
     const centerId = req.user.id_centro;

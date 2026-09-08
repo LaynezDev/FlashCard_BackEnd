@@ -34,6 +34,10 @@ app.use(express.json()); // Habilitar la lectura de JSON en el body
 
 app.use("/api/v1/auth", authLimiter);
 
+app.get("/api/v1/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 // Hacer que la carpeta 'uploads' sea accesible vía URL
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

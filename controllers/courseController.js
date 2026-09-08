@@ -73,8 +73,6 @@ exports.deleteCourse = async (req, res) => {
     }
     const { courseId } = req.params;
     try {
-        // Nota: Si no tienes ON DELETE CASCADE en MySQL, deberías borrar primero 
-        // inscripciones y decks asociados manualmente aquí.
         await db.query('DELETE FROM Cursos WHERE id_curso = ?', [courseId]);
         res.json({ msg: 'Curso eliminado' });
     } catch (error) {
@@ -84,7 +82,6 @@ exports.deleteCourse = async (req, res) => {
 
 // Inscribir un alumno a un curso
 exports.enrollStudent = async (req, res) => {
-    // Solo profesores/admin pueden inscribir
     if (req.user.tipo_usuario !== 'Admin' && req.user.tipo_usuario !== 'Profesor') {
         return res.status(403).json({ msg: 'No tienes permiso para inscribir alumnos.' });
     }
@@ -94,15 +91,12 @@ exports.enrollStudent = async (req, res) => {
         return res.status(400).json({ msg: 'Faltan datos (studentId o courseId)' });
     }
 
-    // Query para evitar duplicados (IGNORE inserta solo si no existe, si tienes PK compuesta)
-    // O hacemos un SELECT primero. Usaremos una inserción directa simple.
     const query = 'INSERT INTO Inscripciones (id_usuario, id_curso) VALUES (?, ?)';
 
     try {
         await db.query(query, [studentId, courseId]);
         res.json({ msg: 'Alumno inscrito correctamente' });
     } catch (error) {
-        // Error 1062 es duplicado en MySQL
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ msg: 'El alumno ya está inscrito en este curso.' });
         }
@@ -111,13 +105,8 @@ exports.enrollStudent = async (req, res) => {
 };
 
 exports.createCourse = async (req, res) => {
-    // Recibimos id_profesor (opcional, si quien crea es el mismo profe se puede auto-asignar)
     const { nombre_curso, descripcion, id_profesor } = req.body;
     const { id_centro, tipo_usuario, id_usuario } = req.user;
-
-    // Lógica:
-    // - Si soy Admin, debo enviar 'id_profesor'.
-    // - Si soy Profesor y el sistema permite que yo cree cursos, me asigno a mí mismo.
     
     let profesorAsignado = id_profesor;
 

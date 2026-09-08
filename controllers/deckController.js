@@ -28,9 +28,7 @@ exports.createDeck = async (req, res) => {
 };
 
 exports.getDecks = async (req, res) => {
-    // Supongamos que el ID del curso del usuario está en el token o lo buscamos
     const userId = req.user.id_usuario;
-    // Esto es un placeholder; en un entorno real, buscarías el curso del usuario en la DB
     const userCourseId = req.user.id_curso || null; 
 
     try {
@@ -52,10 +50,6 @@ exports.createFlashcard = async (req, res) => {
         imagen_url = `/uploads/${req.file.filename}`;
     }
     
-    // Validación de permisos: Solo el creador del deck debería poder añadir tarjetas.
-    // **NOTA:** Esto requiere una verificación adicional en el modelo o controlador
-    // para asegurar que req.user.id_usuario es el creador de deckId.
-
     if (!pregunta || !respuesta) {
         return res.status(400).json({ msg: 'Pregunta y respuesta son obligatorias.' });
     }
@@ -71,8 +65,6 @@ exports.createFlashcard = async (req, res) => {
 exports.getFlashcards = async (req, res) => {
     const { deckId } = req.params;
     
-    // Idealmente, se debe verificar que el usuario tenga permiso para ver este deck
-    
     try {
         const cards = await Deck.getFlashcardsByDeck(deckId);
         res.json(cards);
@@ -86,7 +78,6 @@ exports.getCardsByDeck = async (req, res) => {
     const { deckId } = req.params;
     try {
         const query = 'SELECT * FROM Flashcards WHERE id_deck = ?';
-        console.log("query para obtener tarjetas por deck:", query, "con deckId:", deckId); 
         const [rows] = await db.query(query, [deckId]);
         res.json(rows);
     } catch (error) {

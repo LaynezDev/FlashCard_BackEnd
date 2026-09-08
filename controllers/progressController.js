@@ -90,8 +90,6 @@ exports.registerReview = async (req, res) => {
     }
 };
 
-// ... imports ...
-
 // Obtener estadísticas de un Deck específico para el usuario actual
 exports.getDeckStats = async (req, res) => {
     const { deckId } = req.params;
@@ -132,8 +130,6 @@ exports.getDeckStats = async (req, res) => {
         res.status(500).json({ msg: 'Error al calcular estadísticas' });
     }
 };
-
-// ... imports
 
 // Obtener progreso de TODOS los alumnos de un curso para un deck específico
 exports.getTeacherReport = async (req, res) => {
