@@ -1,13 +1,10 @@
-// routes/authRoutes.js (EJEMPLO)
-
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const validate = require('../middleware/validate');
+const { loginSchema, registerSchema } = require('../validators/authValidators');
 
-// **DEBE ser POST, no GET**
-router.post('/login', authController.loginUser); // RUTA CORRECTA
-// 🆕 Ruta para crear un nuevo usuario
-router.post('/register', authController.registerUser);
-// router.get('/login', ...);  <-- ¡EVITAR ESTO PARA EL LOGIN!
+router.post('/login', validate(loginSchema), authController.loginUser);
+router.post('/register', validate(registerSchema), authController.registerUser);
 
 module.exports = router;

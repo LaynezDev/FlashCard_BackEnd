@@ -2,16 +2,15 @@ const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
 const authMiddleware = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { createCourseSchema, enrollStudentSchema } = require('../validators/courseValidators');
 
-// GET /api/v1/courses (Mis cursos)
 router.get('/', authMiddleware, courseController.getMyCourses);
-
-// GET /api/v1/courses/:courseId/decks (Decks de un curso)
 router.get('/:courseId/decks', authMiddleware, courseController.getDecksByCourse);
 
-router.post('/', authMiddleware, courseController.createCourse);
+router.post('/', authMiddleware, validate(createCourseSchema), courseController.createCourse);
 router.delete('/:courseId', authMiddleware, courseController.deleteCourse);
 
-// POST /api/v1/courses/enroll
-router.post('/enroll', authMiddleware, courseController.enrollStudent);
+router.post('/enroll', authMiddleware, validate(enrollStudentSchema), courseController.enrollStudent);
+
 module.exports = router;

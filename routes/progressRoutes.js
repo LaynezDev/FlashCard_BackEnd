@@ -1,27 +1,17 @@
-// routes/progressRoutes.js
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const progressController = require('../controllers/progressController');
+const validate = require('../middleware/validate');
+const { registerReviewSchema } = require('../validators/progressValidators');
 
-// Todas estas rutas requieren autenticación (auth)
-// 1. Obtener tarjetas para estudiar
 router.get('/decks/:deckId/study', auth, progressController.getFlashcardsForStudy);
 
-// 2. Registrar el resultado de la revisión
-router.post('/flashcards/:cardId/review', auth, progressController.registerReview);
+router.post('/flashcards/:cardId/review', auth, validate(registerReviewSchema), progressController.registerReview);
 
-// 3. Obtener estadísticas del usuario
-// router.get('/stats', auth, progressController.getUserStats);
-
-// 4. Reiniciar progreso
-// router.delete('/decks/:deckId/progress', auth, progressController.resetDeckProgress);
-// ...
 router.get('/:deckId/stats', auth, progressController.getDeckStats);
-// ...
 
-// ...
-// GET /api/v1/progress/report/:courseId/:deckId
 router.get('/report/:courseId/:deckId', auth, progressController.getTeacherReport);
-router.post('/review', auth, progressController.registerReview);
+router.post('/review', auth, validate(registerReviewSchema), progressController.registerReview);
+
 module.exports = router;

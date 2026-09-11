@@ -2,18 +2,15 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { createStudentSchema, createTeacherSchema, updatePasswordSchema } = require('../validators/userValidators');
 
-// Listar alumnos
 router.get('/students', authMiddleware, userController.getStudentsByCenter);
+router.post('/students', authMiddleware, validate(createStudentSchema), userController.createStudent);
 
-// Crear alumno nuevo
-router.post('/students', authMiddleware, userController.createStudent);
-// GET /api/v1/users/teachers
 router.get('/teachers', authMiddleware, userController.getTeachersByCenter);
+router.post('/teachers', authMiddleware, validate(createTeacherSchema), userController.createTeacher);
 
-// POST /api/v1/users/teachers
-router.post('/teachers', authMiddleware, userController.createTeacher);
+router.put('/students/:id/password', authMiddleware, validate(updatePasswordSchema), userController.updateStudentPassword);
 
-// PUT /api/v1/users/students/:id/password - Actualizar contraseña de un alumno
-router.put('/students/:id/password', authMiddleware, userController.updateStudentPassword);
 module.exports = router;
