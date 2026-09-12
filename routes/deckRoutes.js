@@ -12,7 +12,6 @@ router.get('/', authMiddleware, deckController.getDecks);
 router.post('/cards', authMiddleware, upload.single('imagen'), validate(createFlashcardSchema), deckController.createFlashcard);
 
 router.get('/:deckId/cards', authMiddleware, deckController.getFlashcards);
-router.get('/:deckId/flashcards', authMiddleware, deckController.getCardsByDeck);
 router.get('/:deckId/editor', authMiddleware, deckController.getDeckDetails);
 
 router.delete('/:deckId', authMiddleware, deckController.deleteDeck);

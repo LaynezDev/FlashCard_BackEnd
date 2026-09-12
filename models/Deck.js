@@ -1,9 +1,10 @@
 const db = require('../config/db');
-
-// --- Funciones de Decks ---
+const logger = require('../config/logger');
 
 /**
- * Crea un nuevo Deck.
+ * Crea un nuevo Deck y opcionalmente lo vincula a un curso.
+ * @param {object} deckData - Datos del deck (nombre_deck, descripcion, id_creador, id_curso, publico)
+ * @returns {object} Deck creado con su ID
  */
 exports.createDeck = async (deckData) => {
     const { nombre_deck, descripcion, id_creador, id_curso, publico } = deckData;
@@ -24,9 +25,11 @@ exports.createDeck = async (deckData) => {
 
 /**
  * Obtiene todos los Decks visibles para un usuario (creados, públicos o asignados a su curso).
+ * @param {number} userId - ID del usuario que consulta
+ * @param {number|null} userCourseId - ID del curso del usuario (null si no tiene curso)
+ * @returns {Array} Lista de decks con id_deck, nombre_deck y descripcion
  */
 exports.getAvailableDecks = async (userId, userCourseId) => {
-    // Esta consulta es compleja ya que debe considerar múltiples criterios (creador, público, curso)
     const query = `
         SELECT DISTINCT D.id_deck, D.nombre_deck, D.descripcion
         FROM Decks D
@@ -41,10 +44,10 @@ exports.getAvailableDecks = async (userId, userCourseId) => {
     return rows;
 };
 
-// --- Funciones de Flashcards ---
-
 /**
  * Crea una nueva Flashcard dentro de un Deck.
+ * @param {object} cardData - Datos de la flashcard (id_deck, pregunta, respuesta, imagen_url, tipo)
+ * @returns {object} Flashcard creada con su ID
  */
 exports.createFlashcard = async (cardData) => {
     const { id_deck, pregunta, respuesta, imagen_url, tipo } = cardData;
@@ -54,7 +57,9 @@ exports.createFlashcard = async (cardData) => {
 };
 
 /**
- * Obtiene todas las Flashcards de un Deck (usado para edición o listado).
+ * Obtiene todas las Flashcards de un Deck (campos selectos).
+ * @param {number} id_deck - ID del deck
+ * @returns {Array} Lista de flashcards ordenadas por ID
  */
 exports.getFlashcardsByDeck = async (id_deck) => {
     const query = 'SELECT id_flashcard, pregunta, respuesta, imagen_url, tipo FROM Flashcards WHERE id_deck = ? ORDER BY id_flashcard';
@@ -62,24 +67,32 @@ exports.getFlashcardsByDeck = async (id_deck) => {
     return rows;
 };
 
-// Obtener TODAS las tarjetas de un deck (sin algoritmo, lista plana para editar)
+/**
+ * Obtiene todas las flashcards de un deck (todos los campos, orden descendente).
+ * @param {number} deckId - ID del deck
+ * @returns {Array} Lista completa de flashcards
+ */
 exports.getAllCardsInDeck = async (deckId) => {
     const query = 'SELECT * FROM Flashcards WHERE id_deck = ? ORDER BY id_flashcard DESC';
     const [rows] = await db.query(query, [deckId]);
     return rows;
 };
 
-// Eliminar una tarjeta
+/**
+ * Elimina una flashcard específica por su ID.
+ * @param {number} cardId - ID de la flashcard a eliminar
+ */
 exports.deleteFlashcard = async (cardId) => {
     const query = 'DELETE FROM Flashcards WHERE id_flashcard = ?';
     await db.query(query, [cardId]);
 };
 
-// Eliminar un deck completo (y sus tarjetas en cascada si la FK está configurada, si no, manual)
+/**
+ * Elimina un deck y todos sus registros asociados (flashcards, vinculaciones en DeckCursos).
+ * @param {number} deckId - ID del deck a eliminar
+ */
 exports.deleteDeck = async (deckId) => {
-    // Primero borramos las tarjetas asociadas para mantener integridad (si no hay CASCADE)
     await db.query('DELETE FROM Flashcards WHERE id_deck = ?', [deckId]);
     await db.query('DELETE FROM DeckCursos WHERE id_deck = ?', [deckId]);
-    // Finalmente borramos el deck
     await db.query('DELETE FROM Decks WHERE id_deck = ?', [deckId]);
 };
