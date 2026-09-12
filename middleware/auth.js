@@ -1,7 +1,15 @@
 const jwt = require('jsonwebtoken');
 
+/**
+ * Middleware de autenticación JWT.
+ * Extrae el token del encabezado Authorization, lo verifica con JWT_SECRET
+ * y adjunta el payload del usuario (id_usuario, tipo_usuario, id_centro) a req.user.
+ * Rechaza la petición si no hay token o si es inválido/expirado.
+ * @param {object} req - Express request (debe incluir encabezado Authorization: Bearer <token>)
+ * @param {object} res - Express response
+ * @param {function} next - Siguiente middleware en la cadena
+ */
 module.exports = (req, res, next) => {
-    // 1. Obtener el token del encabezado (Authorization: Bearer <token>)
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {

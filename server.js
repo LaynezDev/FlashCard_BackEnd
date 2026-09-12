@@ -1,10 +1,12 @@
 // server.js
-require("dotenv").config(); // Cargar variables de entorno
+require("dotenv").config();
 const express = require("express");
 const path = require('path');
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const pinoHttp = require("pino-http");
+const logger = require("./config/logger");
 const app = express();
 
 // Importar rutas
@@ -26,6 +28,7 @@ const authLimiter = rateLimit({
 
 // Middleware
 app.use(helmet());
+app.use(pinoHttp({ logger }));
 app.use(cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
     credentials: true,
@@ -59,5 +62,5 @@ app.use(errorHandler);
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-   console.log(`Server corriendo en el puerto ${PORT}`);
+   logger.info(`Server corriendo en el puerto ${PORT}`);
 });

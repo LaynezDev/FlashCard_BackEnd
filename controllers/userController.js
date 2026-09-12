@@ -1,40 +1,52 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+const logger = require("../config/logger");
 
-// Listar alumnos del mismo centro del profesor
+/**
+ * Lista todos los alumnos del mismo centro educativo que el profesor/admin.
+ * Filtra por tipo_usuario = 'Alumno' y el centro del token JWT.
+ * @route GET /api/v1/users/students
+ * @returns {Array} Lista de alumnos con id_usuario, nombre y email
+ */
 exports.getStudentsByCenter = async (req, res) => {
-    const centerId = req.user.id_centro; // Viene del Token JWT
-    // Asumimos que tipo_usuario 'student' es el rol de alumno
+    const centerId = req.user.id_centro;
     const query = 'SELECT id_usuario, nombre, email FROM Usuarios WHERE id_centro = ? AND tipo_usuario = "Alumno"';
 
     try {
         const [users] = await db.query(query, [centerId]);
         res.json(users);
     } catch (error) {
+        logger.error({ err: error.message }, 'Error al obtener alumnos');
         res.status(500).json({ msg: "Error al obtener alumnos" });
     }
 };
 
-// Crear un alumno manualmente (El profesor le asigna email y password)
+/**
+ * Crea un nuevo alumno manualmente (asignado por profesor o admin).
+ * Hashea la contraseña con bcrypt y lo asigna al centro del usuario autenticado.
+ * @route POST /api/v1/users/students
+ * @param {string} req.body.nombre - Nombre del alumno
+ * @param {string} req.body.email - Email único del alumno
+ * @param {string} req.body.password - Contraseña (mínimo 6 caracteres)
+ * @returns {object} { msg: 'Alumno creado exitosamente' }
+ */
 exports.createStudent = async (req, res) => {
     const { nombre, email, password } = req.body;
-    const centerId = req.user.id_centro; // Se asigna automáticamente al centro del profesor
+    const centerId = req.user.id_centro;
     if (!nombre || !email || !password) {
         return res.status(400).json({ msg: "Faltan datos" });
     }
 
     try {
-        // 1. Hash password
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
 
-        // 2. Insertar
         const query = 'INSERT INTO Usuarios (nombre, email, password_hash, tipo_usuario, id_centro) VALUES (?, ?, ?, "Alumno", ?)';
         await db.query(query, [nombre, email, password_hash, centerId]);
 
         res.status(201).json({ msg: "Alumno creado exitosamente" });
     } catch (error) {
-        console.error(error);
+        logger.error({ err: error.message }, 'Error al crear alumno');
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(400).json({ msg: "El email ya está registrado." });
         }
@@ -42,11 +54,15 @@ exports.createStudent = async (req, res) => {
     }
 };
 
-// Listar PROFESORES del mismo centro (Solo para Admin)
+/**
+ * Lista todos los profesores del mismo centro educativo.
+ * Solo accesible para usuarios con rol Admin.
+ * @route GET /api/v1/users/teachers
+ * @returns {Array} Lista de profesores con id_usuario, nombre y email
+ */
 exports.getTeachersByCenter = async (req, res) => {
     const centerId = req.user.id_centro;
 
-    // Verificación de seguridad básica
     if (req.user.tipo_usuario !== "Admin") {
         return res.status(403).json({ msg: "Acceso denegado" });
     }
@@ -57,13 +73,22 @@ exports.getTeachersByCenter = async (req, res) => {
         const [users] = await db.query(query, [centerId]);
         res.json(users);
     } catch (error) {
+        logger.error({ err: error.message }, 'Error al obtener profesores');
         res.status(500).json({ msg: "Error al obtener profesores" });
     }
 };
 
-// Crear PROFESOR (Solo para Admin)
+/**
+ * Crea un nuevo profesor en el centro educativo.
+ * Solo accesible para usuarios con rol Admin.
+ * Hashea la contraseña con bcrypt y asigna tipo_usuario = 'profesor'.
+ * @route POST /api/v1/users/teachers
+ * @param {string} req.body.nombre - Nombre del profesor
+ * @param {string} req.body.email - Email único del profesor
+ * @param {string} req.body.password - Contraseña (mínimo 6 caracteres)
+ * @returns {object} { msg: 'Profesor creado exitosamente' }
+ */
 exports.createTeacher = async (req, res) => {
-    // 1. Verificar que quien crea sea Admin
     if (req.user.tipo_usuario !== "Admin") {
         return res.status(403).json({ msg: "Solo el administrador puede registrar profesores." });
     }
@@ -77,37 +102,42 @@ exports.createTeacher = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
 
-        // Insertamos con rol 'profesor'
         const query = 'INSERT INTO Usuarios (nombre, email, password_hash, tipo_usuario, id_centro) VALUES (?, ?, ?, "profesor", ?)';
         await db.query(query, [nombre, email, password_hash, centerId]);
 
         res.status(201).json({ msg: "Profesor creado exitosamente" });
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") return res.status(400).json({ msg: "Email duplicado" });
+        logger.error({ err: error.message }, 'Error al crear profesor');
         res.status(500).json({ msg: "Error al crear profesor" });
     }
 };
 
-// Actualizar contraseña de un alumno (solo para Admin/Profesor)
+/**
+ * Actualiza la contraseña de un alumno específico.
+ * Solo Admin o Profesor pueden ejecutar esta acción.
+ * Verifica que el alumno pertenezca al mismo centro antes de modificar.
+ * @route PUT /api/v1/users/students/:id/password
+ * @param {string} req.params.id - ID del alumno cuya contraseña se actualizará
+ * @param {string} req.body.password - Nueva contraseña (mínimo 6 caracteres)
+ * @returns {object} { msg: 'Contraseña del alumno actualizada exitosamente.' }
+ */
 exports.updateStudentPassword = async (req, res) => {
-    const { id } = req.params; // ID del alumno a actualizar
-    const { password } = req.body; // Nueva contraseña
-    const userId = req.user.id_usuario; // ID del usuario que realiza la acción (profesor/admin)
-    const userType = req.user.tipo_usuario; // Tipo de usuario que realiza la acción
-    const centerId = req.user.id_centro; // Centro del usuario que realiza la acción
+    const { id } = req.params;
+    const { password } = req.body;
+    const userId = req.user.id_usuario;
+    const userType = req.user.tipo_usuario;
+    const centerId = req.user.id_centro;
 
-    // 1. Validar permisos: Solo Admin o Profesor pueden cambiar la contraseña de un alumno
     if (userType !== "Admin" && userType !== "Profesor") {
         return res.status(403).json({ msg: "Acceso denegado. Solo administradores o profesores pueden cambiar contraseñas de alumnos." });
     }
 
-    // 2. Validar datos de entrada
     if (!password || password.trim().length === 0) {
         return res.status(400).json({ msg: "La nueva contraseña no puede estar vacía." });
     }
 
     try {
-        // Opcional: Verificar que el alumno pertenece al mismo centro
         const [studentRows] = await db.query('SELECT id_usuario, id_centro, tipo_usuario FROM Usuarios WHERE id_usuario = ?', [id]);
         if (studentRows.length === 0) {
             return res.status(404).json({ msg: "Alumno no encontrado." });
@@ -118,17 +148,15 @@ exports.updateStudentPassword = async (req, res) => {
             return res.status(403).json({ msg: "No tienes permiso para modificar la contraseña de este usuario o no es un alumno de tu centro." });
         }
 
-        // 3. Hashear la nueva contraseña
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
 
-        // 4. Actualizar la contraseña en la base de datos
         const query = 'UPDATE Usuarios SET password_hash = ? WHERE id_usuario = ?';
         await db.query(query, [password_hash, id]);
 
         res.status(200).json({ msg: "Contraseña del alumno actualizada exitosamente." });
     } catch (error) {
-        console.error("Error al actualizar la contraseña del alumno:", error);
+        logger.error({ err: error.message }, 'Error al actualizar la contraseña del alumno');
         res.status(500).json({ msg: "Error interno del servidor al actualizar la contraseña." });
     }
 };

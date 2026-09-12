@@ -1,6 +1,12 @@
 const multer = require('multer');
 const path = require('path');
 
+/**
+ * Configuración de Multer para subida de archivos.
+ * Almacena archivos en la carpeta 'uploads/' con nombres únicos (timestamp + extensión).
+ * Solo permite imágenes: jpeg, jpg, png, gif (máx. 5MB).
+ */
+
 // Configuración de almacenamiento
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

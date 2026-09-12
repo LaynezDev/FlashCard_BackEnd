@@ -1,6 +1,12 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+/**
+ * Pool de conexiones a MySQL/MariaDB.
+ * Utiliza variables de entorno (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME).
+ * Límite de 10 conexiones simultáneas con espera ilimitada en cola.
+ */
+
 // Crear un pool de conexiones para manejar las consultas de manera eficiente
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
