@@ -145,6 +145,10 @@ exports.getDeckStats = async (req, res) => {
  * @returns {object} { deck_info: { total_cards }, students: [{ id, name, email, percentage, raw_score }] }
  */
 exports.getTeacherReport = async (req, res) => {
+    if (req.user.tipo_usuario !== 'Profesor' && req.user.tipo_usuario !== 'Admin') {
+        return res.status(403).json({ msg: 'Acceso denegado. Solo profesores y administradores pueden ver reportes.' });
+    }
+
     const { courseId, deckId } = req.params;
 
     const deckQuery = 'SELECT COUNT(*) as total_cards FROM Flashcards WHERE id_deck = ?';
