@@ -58,15 +58,14 @@ function calculateInterval(confianza) {
  * Si el usuario ya revisó esa tarjeta, actualiza el nivel y contador.
  * Si es nueva, crea un registro de progreso.
  * @route POST /api/v1/progress/flashcards/:cardId/review
- * @param {string} req.params.cardId - ID de la flashcard (para referencia)
- * @param {number} req.body.id_flashcard - ID de la flashcard a calificar
+ * @param {string} req.params.cardId - ID de la flashcard a calificar
  * @param {number} req.body.nivel_dominio - Nivel de confianza (1-5, obligatorio)
  * @returns {object} { msg, next_review_in_days } con los días para la próxima revisión
  */
 exports.registerReview = async (req, res) => {
     const userId = req.user.id_usuario;
     const { cardId } = req.params;
-    const { id_flashcard, nivel_dominio } = req.body;
+    const { nivel_dominio } = req.body;
 
     if (nivel_dominio < 1 || nivel_dominio > 5) {
         return res.status(400).json({ msg: 'La confianza debe ser un valor entre 1 y 5.' });
@@ -84,7 +83,7 @@ exports.registerReview = async (req, res) => {
     `;
 
     try {
-        await db.query(query, [userId, id_flashcard, nivel_dominio, intervalDays, intervalDays]);
+        await db.query(query, [userId, cardId, nivel_dominio, intervalDays, intervalDays]);
         res.status(200).json({ msg: 'Progreso actualizado exitosamente.', next_review_in_days: intervalDays });
     } catch (error) {
         logger.error({ err: error.message }, 'Error al registrar la revisión');
