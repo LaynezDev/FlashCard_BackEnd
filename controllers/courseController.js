@@ -12,39 +12,69 @@ const logger = require('../config/logger');
 exports.getMyCourses = async (req, res) => {
     const { id_usuario, tipo_usuario, id_centro } = req.user;
 
-    let query = '';
+    let fromClause = '';
+    let whereClause = '';
     let params = [];
 
     if (tipo_usuario === 'Admin') {
-        query = `
-            SELECT C.*, U.nombre as nombre_profesor
-            FROM Cursos C
-            LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario
-            WHERE C.id_centro = ?
-        `;
+        fromClause = `FROM Cursos C LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario`;
+        whereClause = `WHERE C.id_centro = ?`;
         params = [id_centro];
     } else if (tipo_usuario === 'Profesor') {
-        query = `
-            SELECT * FROM Cursos
-            WHERE id_profesor = ?
-        `;
+        fromClause = `FROM Cursos C LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario`;
+        whereClause = `WHERE C.id_profesor = ?`;
         params = [id_usuario];
     } else {
-        query = `
-            SELECT C.*, U.nombre as nombre_profesor
-            FROM Cursos C
-            INNER JOIN Inscripciones I ON C.id_curso = I.id_curso
-            LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario
-            WHERE I.id_usuario = ?
-        `;
+        fromClause = `FROM Cursos C INNER JOIN Inscripciones I ON C.id_curso = I.id_curso LEFT JOIN Usuarios U ON C.id_profesor = U.id_usuario`;
+        whereClause = `WHERE I.id_usuario = ?`;
         params = [id_usuario];
     }
+
+    const statsSubquery = `
+        SELECT 
+            DC.id_curso,
+            COUNT(DISTINCT DC.id_deck) AS total_decks,
+            COUNT(DISTINCT F.id_flashcard) AS total_cards,
+            SUM(CASE WHEN PU.nivel_dominio = 5 THEN 1 ELSE 0 END) + 0 AS cards_mastered_5,
+            SUM(CASE WHEN ds.deck_pct >= 100 THEN 1 ELSE 0 END) + 0 AS decks_completed,
+            MAX(PU.ultima_revision) AS last_interaction
+        FROM DeckCursos DC
+        LEFT JOIN Decks D ON DC.id_deck = D.id_deck
+        LEFT JOIN Flashcards F ON D.id_deck = F.id_deck
+        LEFT JOIN ProgresoUsuario PU ON F.id_flashcard = PU.id_flashcard
+        LEFT JOIN (
+            SELECT 
+                F2.id_deck,
+                CASE WHEN COUNT(F2.id_flashcard) > 0
+                    THEN ROUND(SUM(COALESCE(PU2.nivel_dominio, 0)) / (COUNT(F2.id_flashcard) * 5) * 100)
+                    ELSE 0
+                END AS deck_pct
+            FROM Flashcards F2
+            LEFT JOIN ProgresoUsuario PU2 ON F2.id_flashcard = PU2.id_flashcard
+            GROUP BY F2.id_deck
+        ) ds ON D.id_deck = ds.id_deck
+        GROUP BY DC.id_curso
+    `;
+
+    const query = `
+        SELECT 
+            C.*,
+            U.nombre AS nombre_profesor,
+            COALESCE(stats.total_decks, 0) AS total_decks,
+            COALESCE(stats.total_cards, 0) AS total_cards,
+            COALESCE(stats.cards_mastered_5, 0) AS cards_mastered_5,
+            COALESCE(stats.decks_completed, 0) AS decks_completed,
+            stats.last_interaction
+        ${fromClause}
+        LEFT JOIN (${statsSubquery}) stats ON C.id_curso = stats.id_curso
+        ${whereClause}
+    `;
 
     try {
         const [rows] = await db.query(query, params);
         res.json(rows);
     } catch (error) {
-        logger.error({ err: error.message }, 'Error al obtener cursos');
+        logger.error({ err: error.message, stack: error.stack }, 'Error al obtener cursos');
         res.status(500).json({ msg: 'Error al obtener cursos' });
     }
 };
